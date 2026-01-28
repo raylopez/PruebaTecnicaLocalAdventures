@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 
 use function Spatie\LaravelPdf\Support\pdf;
+use Spatie\Browsershot\Browsershot;
 
 class InvoiceController extends Controller
 {
@@ -83,7 +84,9 @@ class InvoiceController extends Controller
             return response()->json(['message' => 'No existe la factura']);
 
         $pdfContent = pdf()
-            ->setChromePath('/var/www/.puppeteer-cache/chrome/linux-136.0.7103.94/chrome-linux64/chrome')
+            ->withBrowsershot(function (Browsershot $browsershot) {
+                $browsershot->setChromePath('/var/www/.puppeteer-cache/chrome/linux-136.0.7103.94/chrome-linux64/chrome');
+            })
             ->view('pdfs.invoice',compact('invoice'))
             ->name($pdf_name);
 

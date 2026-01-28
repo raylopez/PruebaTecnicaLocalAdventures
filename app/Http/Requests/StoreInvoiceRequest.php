@@ -27,7 +27,6 @@ class StoreInvoiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => 'required|integer|exists:companies,id',
             'client_id' => 'required|integer|exists:clients,id',
             'due_date' => 'required|date',
             'discount' => 'required|decimal:0,2',

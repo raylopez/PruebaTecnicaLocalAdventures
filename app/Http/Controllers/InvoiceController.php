@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\InvoiceStatus;
 use App\Http\Requests\StoreInvoiceItem;
 use App\Http\Requests\StoreInvoiceRequest;
-use App\ItemType;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Item;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Spatie\LaravelPdf\Facades\Pdf;
+
+use function Spatie\LaravelPdf\Support\pdf;
 
 class InvoiceController extends Controller
 {
@@ -28,7 +28,7 @@ class InvoiceController extends Controller
      */
     public function generate(StoreInvoiceRequest $request)
     {
-        $data_invoice = $request->safe()->only(['company_id','client_id','due_date', 'discount', 'tax', 'subtotal', 'total']);
+        $data_invoice = $request->safe()->only(['client_id','due_date', 'discount', 'tax', 'subtotal', 'total', 'notes']);
         $data_invoice_item = $request->safe()->only(['items']);
 
         $invoice = new Invoice();
@@ -73,16 +73,24 @@ class InvoiceController extends Controller
         return response()->json($invoice_item);
     }
 
-    public function getPdf()
+    public function getPdf(int $id)
     {
         $now = Carbon::now();
         $pdf_name = 'invoice_me_' . $now->format('dmY') . '.pdf';
-        $invoice = Invoice::with('invoice_items')->with('invoice_items.item')->with('client')->with('client.company')->find(2);
-        return Pdf::view('pdfs.invoice',['invoice' => $invoice])->name($pdf_name)->download();
+        $invoice = Invoice::with('invoice_items')->with('invoice_items.item')->with('client')->with('client.company')->find($id);
+
+        if(!isset($invoice))
+            return response()->json(['message' => 'No existe la factura']);
+
+        $pdfContent = pdf()
+            ->view('pdfs.invoice',compact('invoice'))
+            ->name($pdf_name);
+
+        return $pdfContent;
     }
 
     public function testPdf() {
         $invoice = Invoice::with('invoice_items')->with('invoice_items.item')->with('client')->with('client.company')->find(2);
-        return view('pdfs.invoice', ['invoice' => $invoice]);
+        return view('pdfs.invoice', compact('invoice'));
     }
 }

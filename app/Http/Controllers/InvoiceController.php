@@ -83,6 +83,7 @@ class InvoiceController extends Controller
             return response()->json(['message' => 'No existe la factura']);
 
         $pdfContent = pdf()
+            ->setChromePath('/var/www/.puppeteer-cache/chrome/linux-136.0.7103.94/chrome-linux64/chrome')
             ->view('pdfs.invoice',compact('invoice'))
             ->name($pdf_name);
 

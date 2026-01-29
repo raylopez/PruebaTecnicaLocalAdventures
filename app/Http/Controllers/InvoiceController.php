@@ -11,8 +11,7 @@ use App\Models\Item;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 
-use function Spatie\LaravelPdf\Support\pdf;
-use Spatie\Browsershot\Browsershot;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
@@ -54,26 +53,6 @@ class InvoiceController extends Controller
         return response()->json($invoice, JsonResponse::HTTP_CREATED);
     }
 
-    /**
-     * Genrate invoice detail with items
-     */
-    public function detail(StoreInvoiceItem $request)
-    {
-
-        $valid_data = $request->safe()->only([
-            'invoice_id',
-            'item_id',
-            'quantity',
-            'unit_price'
-        ]);
-
-        $invoice_item = new InvoiceItem();
-        $invoice_item->fill($valid_data);
-        $invoice_item->save();
-
-        return response()->json($invoice_item);
-    }
-
     public function getPdf(int $id)
     {
         $now = Carbon::now();
@@ -83,18 +62,7 @@ class InvoiceController extends Controller
         if(!isset($invoice))
             return response()->json(['message' => 'No existe la factura']);
 
-        $pdfContent = pdf()
-            ->withBrowsershot(function (Browsershot $browsershot) {
-                $browsershot->setChromePath('/var/www/.puppeteer-cache/chrome/linux-136.0.7103.94/chrome-linux64/chrome');
-            })
-            ->view('pdfs.invoice',compact('invoice'))
-            ->name($pdf_name);
-
-        return $pdfContent;
-    }
-
-    public function testPdf() {
-        $invoice = Invoice::with('invoice_items')->with('invoice_items.item')->with('client')->with('client.company')->find(2);
-        return view('pdfs.invoice', compact('invoice'));
+        $pdf = Pdf::loadView('pdfs.invoice', compact('invoice'));
+        return $pdf->download('invouce.pdf');
     }
 }
